@@ -1,0 +1,80 @@
+{
+  "dada": {
+    "username": "dada",
+    "password": "gugu",
+    "matchPlayed": 2,
+    "matchWon": 0,
+    "lastStreak": 0,
+    "streakRecord": 0,
+    "lastMatchWon": false,
+    "remainingTrials": 12,
+    "guessDistribution": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 0,
+      "6": 0,
+      "7": 0,
+      "8": 0,
+      "9": 0,
+      "10": 0,
+      "11": 0,
+      "12": 0
+    },
+    "hasWonToday": false,
+    "wordSuggestions": []
+  },
+  "dade.orsu": {
+    "username": "dade.orsu",
+    "password": "darsu21CA!",
+    "matchPlayed": 7,
+    "matchWon": 1,
+    "lastStreak": 1,
+    "streakRecord": 1,
+    "lastMatchWon": true,
+    "remainingTrials": 12,
+    "guessDistribution": {
+      "1": 0,
+      "2": 1,
+      "3": 0,
+      "4": 0,
+      "5": 0,
+      "6": 0,
+      "7": 0,
+      "8": 0,
+      "9": 0,
+      "10": 0,
+      "11": 0,
+      "12": 0
+    },
+    "hasWonToday": false,
+    "wordSuggestions": []
+  },
+  "ahahah": {
+    "username": "ahahah",
+    "password": "bhbhbh",
+    "matchPlayed": 0,
+    "matchWon": 0,
+    "lastStreak": 0,
+    "streakRecord": 0,
+    "lastMatchWon": false,
+    "remainingTrials": 12,
+    "guessDistribution": {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 0,
+      "6": 0,
+      "7": 0,
+      "8": 0,
+      "9": 0,
+      "10": 0,
+      "11": 0,
+      "12": 0
+    },
+    "hasWonToday": false,
+    "wordSuggestions": []
+  }
+}
