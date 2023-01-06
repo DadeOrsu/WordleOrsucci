@@ -6,9 +6,9 @@ import com.google.gson.stream.JsonWriter;
 import java.io.*;
 import java.lang.reflect.Type;
 import java.net.*;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
-import java.time.*;
 public class ServerMain {
     /*  tipi di messaggi che è possibile scambiarsi tra client e server */
     private enum msgType {LOGIN, REGISTER, LOGOUT, EXIT, PLAYWORDLE, SENDWORD, SENDSTATS, SHARE, OK, NOTOK}
@@ -49,10 +49,8 @@ public class ServerMain {
      *    -resetta lo stato di vittoria giornaliera
      *    -resetta i suggerimenti
      */
+
     public static class WordExtractor implements Runnable {
-        /*
-         *    metodo utilizzato dal Thread per estrarre una nuova parola dal vocabolario in "words.txt"
-         */
         private static String extractSecretWord() throws IOException {
             RandomAccessFile words = new RandomAccessFile("words.txt", "r");
             long randomLocation = (long) (Math.random() * words.length());
@@ -62,39 +60,27 @@ public class ServerMain {
             words.close();
             return secretWord;
         }
+        @Override
         public void run() {
-            final Timer timer = new Timer();
-            timer.schedule(
-                    new TimerTask() {
-                        @Override
-                        public void run() {
-                            try {
-                                /* estrazione di una nuova secret word */
-                                secretWord = extractSecretWord();
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            }
-                            for(String e: users.keySet()){
-                                /* aggiornamento dati utente */
-                                users.get(e).remainingTrials = 12;
-                                users.get(e).hasWonToday = false;
-                                users.get(e).wordSuggestions = new ArrayList<>();
-                            }
-                            try {
-                                /* aggiornamento file JSON */
-                                updateUsers();
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            }
-                            System.out.println("La nuova parola estratta e': " + secretWord);
-                        }
-                    },
-                    Date.from(Instant.now()), Duration.ofDays(1).toMillis()
-                    // Duration.ofSeconds(60).toMillis()
-            );
+            try {
+                secretWord = extractSecretWord();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            for(String e: users.keySet()){
+
+                users.get(e).remainingTrials = 12;
+                users.get(e).hasWonToday = false;
+                users.get(e).wordSuggestions = new ArrayList<>();
+            }
+            try {
+                updateUsers();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            System.out.println("La nuova parola estratta e': " + secretWord);
         }
     }
-
 
 
     /*
@@ -254,7 +240,6 @@ public class ServerMain {
                                         this.out.println(msgType.NOTOK + " questo username non esiste!");
                                         break;
                                     case 1:
-                                        System.out.println(msgToken[1] + ": ha eseguito il login.");
                                         this.out.println(msgType.OK +" login eseguito con successo, benvenuto!");
                                         /*  se il login è stato eseguito con successo l'utente passa allo stato di LOGGED   */
                                         this.clientUserState = userState.LOGGED;
@@ -275,7 +260,6 @@ public class ServerMain {
                                     this.out.println(msgType.NOTOK + " questo username esiste già.");
                                     break;
                                 case 1:
-                                    System.out.println(msgToken[1] + ": si è registrato a WORDLE.");
                                     this.out.println(msgType.OK + " utente registrato con successo!");
                                     break;
                                 default:
@@ -284,7 +268,6 @@ public class ServerMain {
                             break;
                         case LOGOUT:
                             if(player!=null) {
-                                System.out.println(player.username + ": si è disconnesso.");
                                 player = null;
                                 out.println(msgType.OK + " utente disconnesso.");
                             }
@@ -294,17 +277,14 @@ public class ServerMain {
                         case PLAYWORDLE:
                             if(player!=null) {
                                 if(player.remainingTrials == 0){
-                                    System.out.println(player.username + ": non ha accesso alla partita, ha finito i tentativi oggi.");
                                     out.println(msgType.NOTOK + " hai finito i tentativi.");
                                 }
                                 if(player.hasWonToday){
-                                    System.out.println(player.username + ": non ha accesso alla partita, ha già vinto oggi.");
                                     out.println(msgType.NOTOK + " hai già vinto la partita di oggi!");
                                 }
                                 else {
                                     /*  se l'utente porta a termine la richiesta di giocare passa allo stato d'INGAME*/
                                     clientUserState = userState.INGAME;
-                                    System.out.println(player.username + ": entra in partita.");
                                     out.println(msgType.OK + " puoi giocare. Hai ancora " + this.player.remainingTrials + " tentativi.");
                                 }
                             }
@@ -320,7 +300,6 @@ public class ServerMain {
                                     /*  al primo tentativo corretto di SENDWORD incremento il numero di partite giocate */
                                     if(player.remainingTrials == 12)
                                         player.matchPlayed++;
-                                    System.out.println(player.username + ": ha indovinato la parola di oggi.");
                                     out.println(msgType.OK + " hai vinto!");
                                     player.wordSuggestions.add("++++++++++");
                                     player.guessDistribution.put(12 - player.remainingTrials + 1,player.guessDistribution.get(12 - player.remainingTrials + 1) +1);
@@ -339,7 +318,6 @@ public class ServerMain {
                                     if(player.remainingTrials == 12)
                                         player.matchPlayed++;
                                     player.remainingTrials--;
-                                    System.out.println(player.username + ": ha mandato una parola presente nel vocabolario, " + guessedWord);
                                     stringCompared = new StringBuilder();
                                     guessedSplit = guessedWord.split("");
                                     secretWordSplit = secretWord.split("");
@@ -368,11 +346,9 @@ public class ServerMain {
                                     /*Al termine aggiorno i dati dell'utente per renderli consistenti nel file users.json   */
                                     updateUsers();
                                 }
-                                else {
-                                    System.out.println(player.username + ": ha spedito una parola non presente nel vocabolario.");
+                                else
                                     /*  se la parola non è nel vocabolario lo notifico al giocatore */
                                     out.println(msgType.NOTOK + " la tua guessed word non è nel vocabolario");
-                                }
                             }
                             else
                                 /*  se il giocatore non è in partita non può giocare    */
@@ -381,7 +357,6 @@ public class ServerMain {
                         case SENDSTATS:
                             /* controllo se l'utente ha eseguito il login */
                             if(player != null) {
-                                System.out.println(player.username + ": ha richiesto le sue statistiche di gioco.");
                                 /*  creazione di un messaggio con le statistiche dell'utente che ne fa richiesta    */
                                 float winRate = (float) player.matchWon / player.matchPlayed;
                                 StringBuilder playerStats = new StringBuilder();
@@ -405,7 +380,6 @@ public class ServerMain {
                                 out.println(msgType.NOTOK + " non hai ancora niente da condividere.");
                                 /*  condivisione dei propri risultati agli altri giocatori  */
                             else {
-                                System.out.println(player.username + ": ha condiviso i risultati ottenuti in questa partita.");
                                 StringBuilder wordSuggestions = new StringBuilder();
                                 for (String e : player.wordSuggestions) {
                                     wordSuggestions.append(" ").append(e);
@@ -453,8 +427,12 @@ public class ServerMain {
                 throw new RuntimeException();
             }
             /* creazione thread per eseguire operazioni di routine  */
-            Thread wordExtractor = new Thread(new WordExtractor());
-            wordExtractor.start();
+            ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+            Runnable task = new WordExtractor();
+            int initialDelay = 0;
+            int periodicDelay = (int) Duration.ofDays(1).toMinutes();
+            scheduler.scheduleAtFixedRate(task, initialDelay, periodicDelay, TimeUnit.MINUTES);
+
             /*  creazione ThreadPool per creare thread di gestione client ClientHandler    */
             ExecutorService service = Executors.newCachedThreadPool();
             /*  ShutDownHook per gestire la terminazione di ExecutorService alla pressione di CTRL+C    */
@@ -468,7 +446,7 @@ public class ServerMain {
                 /*  ExecutorService smette di eseguire nuovi tasks  */
                 service.shutdown();
                 try {
-                    /*  Attesa della terminazione dei tasks con timeout di quattro secondi    */
+                    /*  Attesa della terminazione dei tasks con timeout di QUATTRO secondi    */
                     if (!service.awaitTermination(4, TimeUnit.SECONDS)) {
                         System.out.println("ExecutorService non ha terminato i task nei tempi previsti.");
                     }
